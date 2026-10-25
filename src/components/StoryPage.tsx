@@ -1,7 +1,7 @@
 import type { Ref } from 'react'
-import { ICONS } from '../icons'
 import { storyVars } from '../storyVars'
 import type { StoryStyle } from '../types'
+import { Icon } from './Icon'
 
 interface Props {
   style: StoryStyle
@@ -15,17 +15,15 @@ interface Props {
 }
 
 function StoryHeader({ brand }: { brand: StoryStyle['brand'] }) {
-  const BrandIcon = brand.icon ? ICONS[brand.icon] : null
   return (
     <header className="story-header">
-      {brand.logo ? <img src={brand.logo} alt="" /> : BrandIcon && <BrandIcon strokeWidth={2} />}
+      {brand.logo ? <img src={brand.logo} alt="" /> : brand.icon && <Icon id={brand.icon} strokeWidth={2} />}
       {brand.handle && <span>{brand.handle}</span>}
     </header>
   )
 }
 
 function StoryFooter({ brand, index, total }: { brand: StoryStyle['brand']; index: number; total: number }) {
-  const ContIcon = ICONS[brand.continueIcon] ?? ICONS['arrow-right']
   const pad = Math.max(2, String(total).length)
   const counter = brand.showPageNumber && total > 1 ? `${String(index + 1).padStart(pad, '0')} / ${String(total).padStart(pad, '0')}` : ''
   return (
@@ -35,7 +33,7 @@ function StoryFooter({ brand, index, total }: { brand: StoryStyle['brand']; inde
         // Hidden, not removed, on the last story so every story keeps the same content height.
         <span className="cont" style={{ visibility: index >= total - 1 ? 'hidden' : 'visible' }}>
           {brand.continueLabel}
-          <ContIcon strokeWidth={2.25} />
+          <Icon id={brand.continueIcon} strokeWidth={2.25} />
         </span>
       )}
     </footer>

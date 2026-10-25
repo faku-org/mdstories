@@ -1,6 +1,8 @@
-import { Ban } from 'lucide-react'
-import { useId, type ReactNode } from 'react'
+import { Ban, Search } from 'lucide-react'
+import { useId, useState, type ReactNode } from 'react'
 import { ICON_IDS, ICONS } from '../icons'
+import { Icon } from './Icon'
+import { IconBrowser } from './IconBrowser'
 
 export function Group({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -171,7 +173,7 @@ export function TextField(props: { label: string; value: string; onChange: (v: s
   )
 }
 
-/** Icon grid. `extra` adds non-lucide choices (dot, dash) at the start. */
+/** Icon grid of quick picks plus a searchable browser (any Lucide icon, brand logos). `extra` adds non-icon choices (dot, dash) at the start. */
 export function IconPicker(props: {
   label: string
   value: string | null
@@ -179,6 +181,8 @@ export function IconPicker(props: {
   allowNone?: boolean
   extra?: { value: string; label: string; node: ReactNode }[]
 }) {
+  const [browsing, setBrowsing] = useState(false)
+  const custom = props.value && !ICONS[props.value] && !props.extra?.some((x) => x.value === props.value) ? props.value : null
   const cell = (on: boolean) =>
     `flex size-9 items-center justify-center rounded-md transition-colors ${on ? 'bg-accent text-on-accent' : 'bg-white/[0.06] text-ink hover:bg-white/[0.12]'}`
   return (
@@ -197,6 +201,12 @@ export function IconPicker(props: {
             <span className="sr-only">{x.label}</span>
           </button>
         ))}
+        {custom && (
+          <button type="button" role="radio" aria-checked title={custom} className={cell(true)} onClick={() => setBrowsing(true)}>
+            <Icon id={custom} className="size-4" />
+            <span className="sr-only">{custom}</span>
+          </button>
+        )}
         {ICON_IDS.map((id) => {
           const Icon = ICONS[id]
           return (
@@ -207,6 +217,18 @@ export function IconPicker(props: {
           )
         })}
       </div>
+      <Button className="w-full" onClick={() => setBrowsing(true)}>
+        <Search className="size-4" /> Buscar más íconos y marcas
+      </Button>
+      <IconBrowser
+        open={browsing}
+        value={props.value}
+        onClose={() => setBrowsing(false)}
+        onPick={(id) => {
+          props.onChange(id)
+          setBrowsing(false)
+        }}
+      />
     </div>
   )
 }

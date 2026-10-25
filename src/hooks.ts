@@ -1,5 +1,6 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { ensureFonts } from './fonts'
+import { getIconSync, loadIcon, subscribeIcons } from './icons'
 import { mdToSections } from './markdown'
 import { paginate, type Page } from './paginate'
 import type { StoryStyle } from './types'
@@ -27,7 +28,12 @@ export function usePagination(md: string, style: StoryStyle) {
   const areaRef = useRef<HTMLDivElement>(null)
   const [pages, setPages] = useState<Page[]>([{ html: '', overflow: false }])
   const [fontTick, setFontTick] = useState(0)
-  const sections = useMemo(() => mdToSections(md, style.bullet, style.hrBreak), [md, style.bullet, style.hrBreak])
+  // A lazily loaded bullet icon (any Lucide icon or brand) is baked into the HTML, so re-split once it arrives.
+  const bulletReady = useSyncExternalStore(subscribeIcons, () => style.bullet === 'dot' || style.bullet === 'dash' || !!getIconSync(style.bullet))
+  useEffect(() => {
+    if (!bulletReady) void loadIcon(style.bullet)
+  }, [bulletReady, style.bullet])
+  const sections = useMemo(() => mdToSections(md, bulletReady ? style.bullet : 'dot', style.hrBreak), [md, style.bullet, style.hrBreak, bulletReady])
 
   useEffect(() => {
     const bump = () => setFontTick((t) => t + 1)
