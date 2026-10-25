@@ -23,30 +23,15 @@
 
 ## Features
 
-- [ ] Export animado a MP4 (fades, slides, loading, etc.). Largo plazo: va como issue en el ROADMAP cuando el repo tenga remoto en GitHub.
-  **No implementado: plan para que decidas.**
-
-  Objetivo: un MP4 9:16 (1080×1920, H.264, 30 fps) por historia o uno solo con todas, con animaciones simples: fade, slide de bloques, barra de progreso ("loading") y revelado del texto por línea o palabra.
-
-  Costo medido: `html-to-image` renderiza una historia de 1080×1920 en ~75–95 ms (medido en esta app, fuentes ya cargadas). Una historia de 5 s a 30 fps son 150 frames (~12–14 s); 26 historias son ~3.900 frames, unos 5–6 minutos. Es factible, pero lento, y hoy el export se frena si la ventana está oculta (`requestAnimationFrame`).
-
-  Dos formas de generar los frames:
-  - (A) Capas + compositor en canvas: ~100 veces más rápido (≈2–5 ms/frame) y determinista, pero solo anima capas (fade, slide, escala, revelado por línea/palabra).
-  - (A2) Avanzar animaciones CSS reales con la Web Animations API (`animation.currentTime = t`) y rasterizar cada frame con `html-to-image`: permite cualquier animación de CSS, a costa de los 5–6 minutos de arriba y de depender del render del DOM.
-
-  Recomendación: (A), y dejar (A2) como plan B si hace falta animación CSS arbitraria. Pipeline:
-  1. Rasterizar cada historia una sola vez en capas (fondo, encabezado, pie, y un bitmap por bloque/línea/palabra según el efecto), con el mismo `html-to-image` y las mismas fuentes embebidas que hoy. Las líneas se obtienen con `Range.getClientRects()` sobre el layout ya paginado.
-  2. Un compositor `canvas 2D` dibuja cada frame transformando esas capas (opacity, translate, clip), sin depender de `requestAnimationFrame` (hoy el export se frena con la ventana oculta; acá no).
-  3. `VideoEncoder` (WebCodecs, `avc1.640028`) + `mp4-muxer` (o `mediabunny`, su sucesor) para armar el `.mp4` en memoria; sin audio o con una pista silenciosa AAC. Backpressure con `encodeQueueSize` y cancelación desde la UI.
-  4. El mismo compositor alimenta un reproductor en el modo preview, así se ve la animación antes de exportar.
-
-  Otras alternativas, descartadas:
-  - ffmpeg.wasm (B): acepta cualquier filtro y códec, pero el core pesa ~30 MB, es lento (single thread salvo COOP/COEP), x264 es GPL y hay que renderizar igual todos los frames a PNG antes. Solo conviene si hiciera falta audio mezclado o un códec que WebCodecs no tiene.
-  - `MediaRecorder` sobre `canvas.captureStream` (C): es el más corto de escribir, pero graba en tiempo real, no es determinista, el navegador decide el contenedor (WebM en Chrome) y se frena con la ventana en segundo plano.
-  - Servidor con Playwright + ffmpeg (D): máxima fidelidad, pero rompe que la app sea 100 % local y sumaría infraestructura al VPS.
-
-  Compromisos de (A): las animaciones quedan limitadas a lo que se puede hacer moviendo capas (no anima propiedades de CSS dentro del texto); más capas = más memoria (cada bitmap 1080×1920 son ~8 MB, hay que liberar por historia); WebCodecs de video necesita Chrome/Edge 94+ o Safari 16.4+, en Firefox recién desde la 130 (a verificar); y hay que verificar emojis y fuentes custom en las capas (las data URLs ya funcionan para el PNG).
-
-  Esfuerzo estimado: 4–5 días. Día 1: capas por línea/palabra + compositor + reproductor en preview. Día 2: pipeline de encode + muxer + progreso y cancelación + límites de memoria. Día 3: presets de animación (fade, slide, loading, typewriter) y UI (duración por historia según palabras, fps, preset). Día 4–5: pruebas en Chrome/Safari/Firefox, fuentes y emojis, rendimiento con 26 historias y subir un MP4 real a Instagram.
-
-  Para decidir: (1) ¿alcanza con animar capas (A) o querés animación de CSS arbitraria (A2, más lento)?; (2) ¿hace falta audio?; (3) ¿qué efectos entran en la primera versión?; (4) ¿un MP4 por historia, uno con todas, o ambos?; (5) navegadores objetivo (¿Firefox cuenta?).
+- [x] Export animado a MP4 (fades, slides, loading, etc.). Largo plazo: va como issue en el ROADMAP cuando el repo tenga remoto en GitHub.
+  Hecho en `feat/mp4-remotion` (v0.3.0) con **Remotion**, usando `@remotion/web-renderer`: renderiza en el browser (sin servidor, sin token, sin subir nada) y codifica H.264 con WebCodecs. Botón "Video" → diálogo con vista previa (`@remotion/player`), qué exportar (esta historia / todas en uno / una por historia en .zip), animación (Aparecer, Subir, Palabra por palabra), barra de carga, duración automática (≈4 palabras/s, 4–20 s) o fija, calidad, GPU, progreso, tiempo estimado y cancelar.
+  Código: `src/video/` (animación como función pura del frame, composición, render) y `src/components/VideoDialog.tsx` (carga lazy: el bundle principal casi no cambia, la parte de video son ~217 kB gzip aparte).
+  Verificado en el browser: MP4 1080×1920 de 4 s; el progreso del video coincide con el tiempo (0–94 %), el contenido aparece entre 0,5 y 1,25 s, las fuentes custom (Playfair) y el ícono de marca salen igual que en el PNG (diferencia media 7/255 por antialiasing); palabra por palabra revela el texto de forma progresiva; el .zip trae 4 MP4 válidos; cancelar funciona.
+  Límites conocidos:
+  - **Velocidad:** el cuello de botella es dibujar cada frame (el renderer recorre el DOM y dibuja en canvas con un solo hilo), no el encoder. Medido: ~8–14 frames/s en "Subir/Aparecer" y ~4 en "Palabra por palabra" (un span por palabra). Una historia de 17 s son ~3 min en ese modo. La GPU no cambia nada acá: el encoder por hardware hace ~170 fps contra ~140 por software en esta PC (RTX 5070), así que el switch "Usar la GPU" existe pero casi no se nota.
+  - Solo CSS básico (el renderer dibuja el DOM a mano): no hay `backdrop-filter`, `mix-blend-mode`, `z-index`, etc. Las historias de hoy no los usan; si se agregan, hay que revisar el video.
+  - Sin audio. Entre historias de "Todas en uno" hay corte directo (no hay crossfade todavía).
+  - Si la pestaña queda en segundo plano va más lento (el navegador frena los timers).
+  - Remotion registra un evento anónimo de uso por render (se avisa en el diálogo). Licencia: gratis hasta 3 personas por equipo/empresa; a partir de 4 hay licencia paga (revisar los términos vigentes).
+  - Chrome/Edge 94+, Firefox 130+, Safari 26+ (WebCodecs).
+  Si hace falta fidelidad CSS total o más velocidad: render por CLI/servidor con `@remotion/renderer` (Chrome headless + ffmpeg, varios núcleos, `hardwareAcceleration: 'if-possible'` para NVENC). Los componentes de `src/video/` se reusan tal cual.

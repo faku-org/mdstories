@@ -1,5 +1,5 @@
-import { Download, Loader2, Save } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
+import { Download, Film, Loader2, Save } from 'lucide-react'
+import { lazy, Suspense, useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { Button } from './components/controls'
 import { ShortcutsHelp } from './components/ShortcutsHelp'
 import { EditorPane } from './components/EditorPane'
@@ -20,6 +20,9 @@ import { useShortcuts } from './shortcuts'
 import { deleteHistory, listHistory, loadDraft, loadTemplates, saveDraft, saveHistory, saveTemplates, uid, type HistoryEntry } from './storage'
 import { DEFAULT_STYLE, type StoryStyle, type Template } from './types'
 
+// Remotion and the video encoder are only needed once someone exports a video.
+const VideoDialog = lazy(() => import('./components/VideoDialog').then((m) => ({ default: m.VideoDialog })))
+
 const initial = loadDraft()
 void initCustomFonts()
 
@@ -38,6 +41,7 @@ export default function App() {
   const [toast, setToast] = useState<ToastData | null>(null)
   const [help, setHelp] = useState(false)
   const [preview, setPreview] = useState(false)
+  const [video, setVideo] = useState(false)
 
   // Imported fonts load after startup: re-render so every story picks up the real family.
   const customFonts = useSyncExternalStore(subscribeFonts, getCustomFonts)
@@ -247,6 +251,9 @@ export default function App() {
             <Button onClick={exportCurrent} disabled={!!busy} title="Descargar la historia actual como PNG (Ctrl+E)">
               <Download className="size-4" /> Esta historia
             </Button>
+            <Button onClick={() => setVideo(true)} title="Exportar como video MP4 con animaciones">
+              <Film className="size-4" /> Video
+            </Button>
             <Button variant="primary" className="ml-auto" onClick={exportAll} disabled={!!busy} title="Descargar todas (Ctrl+Shift+E)">
               {busy ? <Loader2 className="size-4 animate-spin" /> : <Download className="size-4" />}
               {busy ?? `Exportar ${pages.length > 1 ? `${pages.length} historias (.zip)` : 'PNG'}`}
@@ -305,6 +312,11 @@ export default function App() {
         </>
       )}
 
+      {video && (
+        <Suspense fallback={null}>
+          <VideoDialog open onClose={() => setVideo(false)} style={style} pages={pages} current={current} title={docTitle} />
+        </Suspense>
+      )}
       <ShortcutsHelp open={help} onClose={() => setHelp(false)} />
       <Toast toast={toast} onClose={() => setToast(null)} />
     </div>

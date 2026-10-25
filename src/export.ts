@@ -49,3 +49,10 @@ export async function zipPngs(dataUrls: string[], name: string): Promise<Blob> {
   })
   return zip.generateAsync({ type: 'blob' })
 }
+
+export async function zipFiles(files: { name: string; blob: Blob }[]): Promise<Blob> {
+  const zip = new JSZip()
+  for (const f of files) zip.file(f.name, f.blob)
+  // MP4s are already compressed: store them as they are.
+  return zip.generateAsync({ type: 'blob', compression: 'STORE' })
+}
