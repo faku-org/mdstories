@@ -37,6 +37,7 @@ export default function App() {
   const [busy, setBusy] = useState<string | null>(null)
   const [toast, setToast] = useState<ToastData | null>(null)
   const [help, setHelp] = useState(false)
+  const [preview, setPreview] = useState(false)
 
   // Imported fonts load after startup: re-render so every story picks up the real family.
   const customFonts = useSyncExternalStore(subscribeFonts, getCustomFonts)
@@ -197,6 +198,8 @@ export default function App() {
     exportAll: () => (busy ? undefined : exportAll()),
     safeZones: () => setShowSafe((v) => !v),
     help: () => setHelp((v) => !v),
+    preview: () => setPreview((v) => !v),
+    exitPreview: preview ? () => setPreview(false) : undefined,
   })
 
   // ---------- render ----------
@@ -204,17 +207,20 @@ export default function App() {
   const page = pages[current] ?? pages[0]
 
   return (
-    <div ref={rootRef} className="relative grid h-full overflow-hidden" style={{ gridTemplateColumns: `${panels.editor}px minmax(0, 1fr) ${panels.settings}px` }}>
-      <EditorPane
-        title={title}
-        md={md}
-        pageCount={pages.length}
-        overflowCount={overflowCount}
-        onTitle={setTitle}
-        onMd={setMd}
-        onOpenFile={openFile}
-        onNew={newDoc}
-      />
+    <div ref={rootRef} className="relative grid h-full overflow-hidden" style={{ gridTemplateColumns: preview ? 'minmax(0, 1fr)' : `${panels.editor}px minmax(0, 1fr) ${panels.settings}px` }}>
+      {/* Preview mode hides the panels but keeps them mounted, so their state (tab, scroll, caret) survives. */}
+      <div className={preview ? 'hidden' : 'contents'}>
+        <EditorPane
+          title={title}
+          md={md}
+          pageCount={pages.length}
+          overflowCount={overflowCount}
+          onTitle={setTitle}
+          onMd={setMd}
+          onOpenFile={openFile}
+          onNew={newDoc}
+        />
+      </div>
 
       {/* ---------- Preview ---------- */}
       <main className="flex min-h-0 flex-col">
@@ -226,10 +232,13 @@ export default function App() {
           showSafe={showSafe}
           onToggleSafe={() => setShowSafe((v) => !v)}
           onHelp={() => setHelp(true)}
+          bare={preview}
+          onTogglePreview={() => setPreview((v) => !v)}
           onGo={(i) => setCurrent(Math.max(0, Math.min(pages.length - 1, i)))}
         />
 
-        <div className="border-t border-line p-3">
+        {/* In preview mode the strip stays laid out off-screen: its nodes are the export sources. */}
+        <div className={preview ? 'pointer-events-none fixed top-0 left-[-20000px] opacity-0' : 'border-t border-line p-3'} inert={preview}>
           <StoryStrip style={style} pages={pages} current={current} onSelect={setCurrent} register={registerNode} />
           <div className="mt-3 flex items-center gap-2">
             <Button onClick={() => saveToHistory()} title="Guardar en el historial (Ctrl+S)">
@@ -246,49 +255,55 @@ export default function App() {
         </div>
       </main>
 
-      <SettingsAside
-        style={style}
-        setStyle={setStyle}
-        templates={templates}
-        onApplyTemplate={(t) => {
-          setStyleState(t.style)
-          setToast({ text: `Template “${t.name}” aplicado.` })
-        }}
-        onSaveTemplate={saveTemplate}
-        onDeleteTemplate={removeTemplate}
-        history={history}
-        docId={docId}
-        onOpenEntry={openEntry}
-        onDeleteEntry={removeEntry}
-      />
+      <div className={preview ? 'hidden' : 'contents'}>
+        <SettingsAside
+          style={style}
+          setStyle={setStyle}
+          templates={templates}
+          onApplyTemplate={(t) => {
+            setStyleState(t.style)
+            setToast({ text: `Template “${t.name}” aplicado.` })
+          }}
+          onSaveTemplate={saveTemplate}
+          onDeleteTemplate={removeTemplate}
+          history={history}
+          docId={docId}
+          onOpenEntry={openEntry}
+          onDeleteEntry={removeEntry}
+        />
+      </div>
 
       {/* Hidden, unscaled measurement page: same structure as a real story. */}
       <div aria-hidden className="pointer-events-none fixed top-0 left-[-20000px] invisible">
         <StoryPage style={style} html={null} index={0} total={2} areaRef={areaRef} contentRef={measureRef} />
       </div>
 
-      <ResizeHandle
-        label="Ancho del editor"
-        value={panels.editor}
-        min={PANELS.editor.min}
-        max={panels.maxEditor}
-        direction={1}
-        onChange={panels.setEditor}
-        onReset={() => panels.reset('editor')}
-        style={{ left: panels.editor }}
-        className="-translate-x-1/2"
-      />
-      <ResizeHandle
-        label="Ancho de los ajustes"
-        value={panels.settings}
-        min={PANELS.settings.min}
-        max={panels.maxSettings}
-        direction={-1}
-        onChange={panels.setSettings}
-        onReset={() => panels.reset('settings')}
-        style={{ right: panels.settings }}
-        className="translate-x-1/2"
-      />
+      {!preview && (
+        <>
+          <ResizeHandle
+            label="Ancho del editor"
+            value={panels.editor}
+            min={PANELS.editor.min}
+            max={panels.maxEditor}
+            direction={1}
+            onChange={panels.setEditor}
+            onReset={() => panels.reset('editor')}
+            style={{ left: panels.editor }}
+            className="-translate-x-1/2"
+          />
+          <ResizeHandle
+            label="Ancho de los ajustes"
+            value={panels.settings}
+            min={PANELS.settings.min}
+            max={panels.maxSettings}
+            direction={-1}
+            onChange={panels.setSettings}
+            onReset={() => panels.reset('settings')}
+            style={{ right: panels.settings }}
+            className="translate-x-1/2"
+          />
+        </>
+      )}
 
       <ShortcutsHelp open={help} onClose={() => setHelp(false)} />
       <Toast toast={toast} onClose={() => setToast(null)} />

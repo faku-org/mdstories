@@ -18,7 +18,8 @@
   Dos separadores (`role=separator`): arrastrar, ← → (Shift = pasos grandes), Home/End, doble clic o Enter para restablecer. Anchos en `localStorage` (`mds:layout`); el preview nunca baja de 320 px y la preferencia vuelve cuando la ventana crece. Verificado: teclado y eventos de puntero sintéticos, persistencia tras recargar, 1440 px. No pude probar un arrastre real con el mouse (la herramienta de arrastre del browser no dispara los eventos de puntero).
 - [x] Atajos de teclado (registro único + ayuda con `?`). Hoy: ← →, Ctrl+S, Ctrl+Shift+E.
   Registro único en `src/shortcuts.ts` (un solo listener; la ayuda se dibuja desde la misma lista). Atajos: ← → Inicio Fin, Ctrl+S, Ctrl+E (esta historia), Ctrl+Shift+E, Z (zonas seguras), `?` (ayuda, también botón con ícono de teclado). Las teclas sueltas se ignoran al escribir, en sliders/separadores y con un diálogo abierto; las de Ctrl siempre andan. Verificado con eventos de teclado reales en el DOM.
-- [ ] Modo preview: se ve solo lo que se exporta (sin editor, sin ajustes, sin zonas seguras).
+- [x] Modo preview: se ve solo lo que se exporta (sin editor, sin ajustes, sin zonas seguras).
+  Botón "Preview" en la barra del preview y atajo `P` (Esc o `P` salen). Muestra solo la historia a tamaño máximo, sin editor, ajustes, barra ni zonas seguras; queda un control flotante (← n/N → Salir). Los paneles siguen montados (la pestaña y el scroll se conservan) y las miniaturas siguen maquetadas fuera de pantalla, así que Ctrl+E / Ctrl+Shift+E exportan igual (verificado: PNG de 1080×1920 con contenido desde el modo preview).
 
 ## Features
 
