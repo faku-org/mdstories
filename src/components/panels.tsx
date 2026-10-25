@@ -1,13 +1,14 @@
-import { AlignCenter, AlignJustify, AlignLeft, AlignRight, FileText, ImagePlus, RotateCcw, Save, Search, Trash2 } from 'lucide-react'
-import { useRef, useState } from 'react'
-import { clampWeight, fontStack, FONTS, getFont } from '../fonts'
+import { AlignCenter, AlignJustify, AlignLeft, AlignRight, FileText, ImagePlus, Plus, RotateCcw, Save, Search, Trash2 } from 'lucide-react'
+import { useRef, useState, useSyncExternalStore } from 'react'
+import { clampWeight, fontStack, FONTS, getCustomFonts, getFont, subscribeFonts } from '../fonts'
 import type { HistoryEntry } from '../storage'
 import { IG_SAFE, type StoryStyle, type Template } from '../types'
 import { Button, ColorField, Group, IconPicker, Segmented, Select, Slider, TextField, Toggle } from './controls'
+import { FontsDialog } from './FontsDialog'
 
 export type SetStyle = (fn: (s: StoryStyle) => StoryStyle) => void
 
-const fontOptions = FONTS.map((f) => ({ value: f.id, label: f.label }))
+const builtInOptions = FONTS.map((f) => ({ value: f.id, label: f.label }))
 
 function helpers(set: SetStyle) {
   return {
@@ -20,13 +21,26 @@ function helpers(set: SetStyle) {
 
 export function TypographyPanel({ style, set }: { style: StoryStyle; set: SetStyle }) {
   const { patch } = helpers(set)
+  const custom = useSyncExternalStore(subscribeFonts, getCustomFonts)
+  const [managing, setManaging] = useState(false)
   const body = getFont(style.bodyFont)
   const head = getFont(style.headingFont)
+  const fontOptions = [...builtInOptions, ...custom.map((f) => ({ value: f.id, label: f.label, group: 'Mis fuentes' }))]
   return (
     <div className="space-y-5">
       <Group title="Fuentes">
-        <Select label="Texto" value={style.bodyFont} options={fontOptions} onChange={(v) => patch({ bodyFont: v })} />
-        <Select label="Títulos" value={style.headingFont} options={fontOptions} onChange={(v) => patch({ headingFont: v })} />
+        <Select label="Texto" value={body.id} options={fontOptions} onChange={(v) => patch({ bodyFont: v })} />
+        <Select label="Títulos" value={head.id} options={fontOptions} onChange={(v) => patch({ headingFont: v })} />
+        <Button className="w-full" onClick={() => setManaging(true)}>
+          <Plus className="size-4" /> Agregar o importar fuente
+        </Button>
+        <FontsDialog
+          open={managing}
+          onClose={() => setManaging(false)}
+          bodyFont={body.id}
+          headingFont={head.id}
+          onUse={(role, id) => patch({ [role]: id })}
+        />
       </Group>
       <Group title="Tamaño y peso">
         <Slider label="Tamaño del texto" value={style.baseSize} min={24} max={80} unit="px" onChange={(v) => patch({ baseSize: v })} />

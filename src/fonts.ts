@@ -21,6 +21,8 @@ export interface FontDef {
   min: number
   max: number
   kind: 'sans' | 'serif' | 'mono'
+  /** Imported by the user (Google Fonts or a file); lives in IndexedDB, see customFonts.ts. */
+  custom?: boolean
 }
 
 export const FONTS: FontDef[] = [
@@ -38,8 +40,23 @@ export const FONTS: FontDef[] = [
 
 export const MONO = FONTS.find((f) => f.id === 'jetbrains')!
 
+// Fonts the user imported. They load after startup, so the list is observable.
+let customList: FontDef[] = []
+const listeners = new Set<() => void>()
+
+export const getCustomFonts = () => customList
+export function setCustomFonts(list: FontDef[]) {
+  customList = list
+  listeners.forEach((l) => l())
+}
+export function subscribeFonts(fn: () => void) {
+  listeners.add(fn)
+  return () => void listeners.delete(fn)
+}
+
+/** Unknown ids (a deleted custom font) fall back to the first built-in. */
 export function getFont(id: string): FontDef {
-  return FONTS.find((f) => f.id === id) ?? FONTS[0]
+  return FONTS.find((f) => f.id === id) ?? customList.find((f) => f.id === id) ?? FONTS[0]
 }
 
 export function fontStack(f: FontDef): string {
@@ -51,6 +68,8 @@ export function clampWeight(f: FontDef, w: number): number {
   return Math.min(f.max, Math.max(f.min, w))
 }
 
+const SAMPLE = 'Aá éñü ¿¡'
+
 /** Loads the faces a page needs so measurement uses real metrics. */
 export async function ensureFonts(ids: string[], weights: number[]): Promise<void> {
   const loads: Promise<unknown>[] = []
@@ -58,8 +77,9 @@ export async function ensureFonts(ids: string[], weights: number[]): Promise<voi
     const f = getFont(id)
     for (const w of weights) {
       const cw = clampWeight(f, w)
-      loads.push(document.fonts.load(`${cw} 48px ${f.family}`))
-      loads.push(document.fonts.load(`italic ${cw} 48px ${f.family}`))
+      // Sample text pulls in the accented-letter subset of imported fonts too.
+      loads.push(document.fonts.load(`${cw} 48px ${f.family}`, SAMPLE))
+      loads.push(document.fonts.load(`italic ${cw} 48px ${f.family}`, SAMPLE))
     }
   }
   loads.push(document.fonts.load(`400 48px ${MONO.family}`))

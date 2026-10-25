@@ -107,8 +107,14 @@ export function Segmented<T extends string>(props: {
   )
 }
 
-export function Select(props: { label: string; value: string; options: { value: string; label: string }[]; onChange: (v: string) => void }) {
+export function Select(props: { label: string; value: string; options: { value: string; label: string; group?: string }[]; onChange: (v: string) => void }) {
   const id = useId()
+  const groups = [...new Set(props.options.map((o) => o.group ?? ''))]
+  const opt = (o: { value: string; label: string }) => (
+    <option key={o.value} value={o.value}>
+      {o.label}
+    </option>
+  )
   return (
     <div className="space-y-1">
       <label htmlFor={id} className="text-sm">
@@ -120,11 +126,15 @@ export function Select(props: { label: string; value: string; options: { value: 
         onChange={(e) => props.onChange(e.target.value)}
         className="h-9 w-full rounded-lg border border-line bg-surface-2 px-2 text-sm"
       >
-        {props.options.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
-          </option>
-        ))}
+        {groups.map((g) =>
+          g ? (
+            <optgroup key={g} label={g}>
+              {props.options.filter((o) => o.group === g).map(opt)}
+            </optgroup>
+          ) : (
+            props.options.filter((o) => !o.group).map(opt)
+          ),
+        )}
       </select>
     </div>
   )

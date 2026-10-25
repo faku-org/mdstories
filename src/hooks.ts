@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
-import { ensureFonts } from './fonts'
+import { ensureFonts, getCustomFonts, subscribeFonts } from './fonts'
 import { getIconSync, loadIcon, subscribeIcons } from './icons'
 import { mdToSections } from './markdown'
 import { paginate, type Page } from './paginate'
@@ -28,6 +28,8 @@ export function usePagination(md: string, style: StoryStyle) {
   const areaRef = useRef<HTMLDivElement>(null)
   const [pages, setPages] = useState<Page[]>([{ html: '', overflow: false }])
   const [fontTick, setFontTick] = useState(0)
+  // Imported fonts arrive after startup; measure again once they are registered.
+  const customFonts = useSyncExternalStore(subscribeFonts, getCustomFonts)
   // A lazily loaded bullet icon (any Lucide icon or brand) is baked into the HTML, so re-split once it arrives.
   const bulletReady = useSyncExternalStore(subscribeIcons, () => style.bullet === 'dot' || style.bullet === 'dash' || !!getIconSync(style.bullet))
   useEffect(() => {
@@ -52,7 +54,7 @@ export function usePagination(md: string, style: StoryStyle) {
       cancelled = true
       clearTimeout(t)
     }
-  }, [sections, style, fontTick])
+  }, [sections, style, fontTick, customFonts])
 
   return { pages, measureRef, areaRef }
 }

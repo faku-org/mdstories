@@ -1,5 +1,5 @@
 import { Download, Loader2, Save } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { Button } from './components/controls'
 import { EditorPane } from './components/EditorPane'
 import type { SetStyle } from './components/panels'
@@ -8,7 +8,9 @@ import { SettingsAside } from './components/SettingsAside'
 import { StoryStrip } from './components/StoryStrip'
 import { StoryPage } from './components/StoryPage'
 import { Toast, type ToastData } from './components/Toast'
+import { initCustomFonts } from './customFonts'
 import { download, fontCss, renderAll, renderPng, renderThumb, slug, zipPngs } from './export'
+import { getCustomFonts, subscribeFonts } from './fonts'
 import { usePagination } from './hooks'
 import { titleFromMd } from './markdown'
 import { SAMPLE_MD } from './sample'
@@ -16,6 +18,7 @@ import { deleteHistory, listHistory, loadDraft, loadTemplates, saveDraft, saveHi
 import { DEFAULT_STYLE, type StoryStyle, type Template } from './types'
 
 const initial = loadDraft()
+void initCustomFonts()
 
 export default function App() {
   const [docId, setDocId] = useState(initial?.docId ?? uid())
@@ -31,6 +34,8 @@ export default function App() {
   const [busy, setBusy] = useState<string | null>(null)
   const [toast, setToast] = useState<ToastData | null>(null)
 
+  // Imported fonts load after startup: re-render so every story picks up the real family.
+  const customFonts = useSyncExternalStore(subscribeFonts, getCustomFonts)
   const nodesRef = useRef<(HTMLDivElement | null)[]>([])
   const fontCssCache = useRef(new Map<string, string>())
   const { pages, measureRef, areaRef } = usePagination(md, style)
@@ -39,6 +44,11 @@ export default function App() {
   }, [])
 
   const current = Math.min(currentRaw, pages.length - 1)
+
+  // An imported font can be replaced under the same id: drop the embedded-CSS cache when the list changes.
+  useEffect(() => {
+    fontCssCache.current.clear()
+  }, [customFonts])
 
   // ---------- persistence ----------
   useEffect(() => {
