@@ -41,7 +41,7 @@ export function SettingsAside(props: Props) {
               aria-selected={tab === t.id}
               onClick={() => setTab(t.id)}
               title={t.label}
-              className={`flex h-9 flex-1 items-center justify-center gap-1.5 rounded-full text-xs font-medium transition-colors ${
+              className={`flex h-9 flex-1 items-center justify-center gap-1.5 rounded-full px-3 text-xs font-medium transition-colors ${
                 tab === t.id ? 'bg-white/[0.1] text-ink' : 'text-ink-muted hover:text-ink'
               }`}
             >

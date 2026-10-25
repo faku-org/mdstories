@@ -34,6 +34,20 @@ body {
   outline-offset: 2px;
 }
 
+/* Tailwind v4 dropped the pointer default on buttons. */
+button:not(:disabled),
+[role='button']:not([aria-disabled='true']),
+[role='tab'],
+[role='radio'],
+[role='switch'],
+summary {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
 input[type='range'] {
   accent-color: var(--color-accent);
 }

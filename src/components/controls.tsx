@@ -62,8 +62,9 @@ export function Toggle({ label, checked, onChange, hint }: { label: string; chec
         onClick={() => onChange(!checked)}
         className={`relative mt-0.5 h-5 w-9 flex-none rounded-full transition-colors ${checked ? 'bg-accent' : 'bg-white/15'}`}
       >
+        {/* Track 36 - knob 16 - 2 x 2px inset = 16px of travel (translate-x-4). */}
         <span
-          className={`absolute top-0.5 size-4 rounded-full transition-transform ${checked ? 'translate-x-4 bg-on-accent' : 'translate-x-0.5 bg-ink'}`}
+          className={`absolute top-0.5 left-0.5 size-4 rounded-full transition-transform ${checked ? 'translate-x-4 bg-on-accent' : 'translate-x-0 bg-ink'}`}
         />
       </button>
     </div>
