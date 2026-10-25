@@ -24,3 +24,29 @@
 ## Features
 
 - [ ] Export animado a MP4 (fades, slides, loading, etc.). Largo plazo: va como issue en el ROADMAP cuando el repo tenga remoto en GitHub.
+  **No implementado: plan para que decidas.**
+
+  Objetivo: un MP4 9:16 (1080×1920, H.264, 30 fps) por historia o uno solo con todas, con animaciones simples: fade, slide de bloques, barra de progreso ("loading") y revelado del texto por línea o palabra.
+
+  Costo medido: `html-to-image` renderiza una historia de 1080×1920 en ~75–95 ms (medido en esta app, fuentes ya cargadas). Una historia de 5 s a 30 fps son 150 frames (~12–14 s); 26 historias son ~3.900 frames, unos 5–6 minutos. Es factible, pero lento, y hoy el export se frena si la ventana está oculta (`requestAnimationFrame`).
+
+  Dos formas de generar los frames:
+  - (A) Capas + compositor en canvas: ~100 veces más rápido (≈2–5 ms/frame) y determinista, pero solo anima capas (fade, slide, escala, revelado por línea/palabra).
+  - (A2) Avanzar animaciones CSS reales con la Web Animations API (`animation.currentTime = t`) y rasterizar cada frame con `html-to-image`: permite cualquier animación de CSS, a costa de los 5–6 minutos de arriba y de depender del render del DOM.
+
+  Recomendación: (A), y dejar (A2) como plan B si hace falta animación CSS arbitraria. Pipeline:
+  1. Rasterizar cada historia una sola vez en capas (fondo, encabezado, pie, y un bitmap por bloque/línea/palabra según el efecto), con el mismo `html-to-image` y las mismas fuentes embebidas que hoy. Las líneas se obtienen con `Range.getClientRects()` sobre el layout ya paginado.
+  2. Un compositor `canvas 2D` dibuja cada frame transformando esas capas (opacity, translate, clip), sin depender de `requestAnimationFrame` (hoy el export se frena con la ventana oculta; acá no).
+  3. `VideoEncoder` (WebCodecs, `avc1.640028`) + `mp4-muxer` (o `mediabunny`, su sucesor) para armar el `.mp4` en memoria; sin audio o con una pista silenciosa AAC. Backpressure con `encodeQueueSize` y cancelación desde la UI.
+  4. El mismo compositor alimenta un reproductor en el modo preview, así se ve la animación antes de exportar.
+
+  Otras alternativas, descartadas:
+  - ffmpeg.wasm (B): acepta cualquier filtro y códec, pero el core pesa ~30 MB, es lento (single thread salvo COOP/COEP), x264 es GPL y hay que renderizar igual todos los frames a PNG antes. Solo conviene si hiciera falta audio mezclado o un códec que WebCodecs no tiene.
+  - `MediaRecorder` sobre `canvas.captureStream` (C): es el más corto de escribir, pero graba en tiempo real, no es determinista, el navegador decide el contenedor (WebM en Chrome) y se frena con la ventana en segundo plano.
+  - Servidor con Playwright + ffmpeg (D): máxima fidelidad, pero rompe que la app sea 100 % local y sumaría infraestructura al VPS.
+
+  Compromisos de (A): las animaciones quedan limitadas a lo que se puede hacer moviendo capas (no anima propiedades de CSS dentro del texto); más capas = más memoria (cada bitmap 1080×1920 son ~8 MB, hay que liberar por historia); WebCodecs de video necesita Chrome/Edge 94+ o Safari 16.4+, en Firefox recién desde la 130 (a verificar); y hay que verificar emojis y fuentes custom en las capas (las data URLs ya funcionan para el PNG).
+
+  Esfuerzo estimado: 4–5 días. Día 1: capas por línea/palabra + compositor + reproductor en preview. Día 2: pipeline de encode + muxer + progreso y cancelación + límites de memoria. Día 3: presets de animación (fade, slide, loading, typewriter) y UI (duración por historia según palabras, fps, preset). Día 4–5: pruebas en Chrome/Safari/Firefox, fuentes y emojis, rendimiento con 26 historias y subir un MP4 real a Instagram.
+
+  Para decidir: (1) ¿alcanza con animar capas (A) o querés animación de CSS arbitraria (A2, más lento)?; (2) ¿hace falta audio?; (3) ¿qué efectos entran en la primera versión?; (4) ¿un MP4 por historia, uno con todas, o ambos?; (5) navegadores objetivo (¿Firefox cuenta?).
