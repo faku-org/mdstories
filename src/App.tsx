@@ -1,6 +1,7 @@
 import { Download, Loader2, Save } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { Button } from './components/controls'
+import { ShortcutsHelp } from './components/ShortcutsHelp'
 import { EditorPane } from './components/EditorPane'
 import type { SetStyle } from './components/panels'
 import { PreviewStage } from './components/PreviewStage'
@@ -15,6 +16,7 @@ import { getCustomFonts, subscribeFonts } from './fonts'
 import { PANELS, usePagination, usePanelSizes, useSize } from './hooks'
 import { titleFromMd } from './markdown'
 import { SAMPLE_MD } from './sample'
+import { useShortcuts } from './shortcuts'
 import { deleteHistory, listHistory, loadDraft, loadTemplates, saveDraft, saveHistory, saveTemplates, uid, type HistoryEntry } from './storage'
 import { DEFAULT_STYLE, type StoryStyle, type Template } from './types'
 
@@ -34,6 +36,7 @@ export default function App() {
   const [history, setHistory] = useState<HistoryEntry[]>([])
   const [busy, setBusy] = useState<string | null>(null)
   const [toast, setToast] = useState<ToastData | null>(null)
+  const [help, setHelp] = useState(false)
 
   // Imported fonts load after startup: re-render so every story picks up the real family.
   const customFonts = useSyncExternalStore(subscribeFonts, getCustomFonts)
@@ -184,31 +187,17 @@ export default function App() {
   }
 
   // ---------- keyboard ----------
-  const actions = useRef({ exportAll, saveToHistory })
-  useEffect(() => {
-    actions.current = { exportAll, saveToHistory }
+  useShortcuts({
+    prev: () => setCurrent((c) => Math.max(Math.min(c, pages.length - 1) - 1, 0)),
+    next: () => setCurrent((c) => Math.min(c + 1, pages.length - 1)),
+    first: () => setCurrent(0),
+    last: () => setCurrent(pages.length - 1),
+    save: () => saveToHistory(),
+    exportOne: () => (busy ? undefined : exportCurrent()),
+    exportAll: () => (busy ? undefined : exportAll()),
+    safeZones: () => setShowSafe((v) => !v),
+    help: () => setHelp((v) => !v),
   })
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      const mod = e.ctrlKey || e.metaKey
-      if (mod && e.key.toLowerCase() === 's') {
-        e.preventDefault()
-        actions.current.saveToHistory()
-        return
-      }
-      if (mod && e.shiftKey && e.key.toLowerCase() === 'e') {
-        e.preventDefault()
-        actions.current.exportAll()
-        return
-      }
-      const t = e.target as HTMLElement
-      if (t.closest('input, textarea, select, [contenteditable]')) return
-      if (e.key === 'ArrowRight') setCurrent((c) => Math.min(c + 1, pages.length - 1))
-      if (e.key === 'ArrowLeft') setCurrent((c) => Math.max(c - 1, 0))
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [pages.length])
 
   // ---------- render ----------
   const overflowCount = pages.filter((p) => p.overflow).length
@@ -236,6 +225,7 @@ export default function App() {
           total={pages.length}
           showSafe={showSafe}
           onToggleSafe={() => setShowSafe((v) => !v)}
+          onHelp={() => setHelp(true)}
           onGo={(i) => setCurrent(Math.max(0, Math.min(pages.length - 1, i)))}
         />
 
@@ -245,7 +235,7 @@ export default function App() {
             <Button onClick={() => saveToHistory()} title="Guardar en el historial (Ctrl+S)">
               <Save className="size-4" /> Guardar
             </Button>
-            <Button onClick={exportCurrent} disabled={!!busy} title="Descargar la historia actual como PNG">
+            <Button onClick={exportCurrent} disabled={!!busy} title="Descargar la historia actual como PNG (Ctrl+E)">
               <Download className="size-4" /> Esta historia
             </Button>
             <Button variant="primary" className="ml-auto" onClick={exportAll} disabled={!!busy} title="Descargar todas (Ctrl+Shift+E)">
@@ -300,6 +290,7 @@ export default function App() {
         className="translate-x-1/2"
       />
 
+      <ShortcutsHelp open={help} onClose={() => setHelp(false)} />
       <Toast toast={toast} onClose={() => setToast(null)} />
     </div>
   )

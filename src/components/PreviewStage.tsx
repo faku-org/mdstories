@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, ScanEye, TriangleAlert } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Keyboard, ScanEye, TriangleAlert } from 'lucide-react'
 import { useSize } from '../hooks'
 import type { Page } from '../paginate'
 import { STORY_H, STORY_W, type StoryStyle } from '../types'
@@ -13,11 +13,12 @@ interface Props {
   total: number
   showSafe: boolean
   onToggleSafe: () => void
+  onHelp: () => void
   onGo: (i: number) => void
 }
 
 /** The selected story, scaled to fit, with the optional Instagram UI overlay. */
-export function PreviewStage({ style, page, current, total, showSafe, onToggleSafe, onGo }: Props) {
+export function PreviewStage({ style, page, current, total, showSafe, onToggleSafe, onHelp, onGo }: Props) {
   const [stageRef, stage] = useSize<HTMLDivElement>()
   const scale = stage.w && stage.h ? Math.min((stage.h - 24) / STORY_H, (stage.w - 24) / STORY_W) : 0.3
   const box = { width: STORY_W * scale, height: STORY_H * scale }
@@ -25,8 +26,12 @@ export function PreviewStage({ style, page, current, total, showSafe, onToggleSa
   return (
     <>
       <div className="flex items-center gap-2 border-b border-line p-3">
-        <Button onClick={onToggleSafe} aria-pressed={showSafe} className={showSafe ? 'ring-1 ring-accent/60' : ''}>
+        <Button onClick={onToggleSafe} aria-pressed={showSafe} title="Zonas seguras (Z)" className={showSafe ? 'ring-1 ring-accent/60' : ''}>
           <ScanEye className="size-4" /> Zonas seguras
+        </Button>
+        <Button onClick={onHelp} title="Atajos de teclado (?)">
+          <Keyboard className="size-4" />
+          <span className="sr-only">Atajos de teclado</span>
         </Button>
         <div className="ml-auto flex items-center gap-1">
           <Button onClick={() => onGo(current - 1)} disabled={current === 0} title="Historia anterior (←)">
