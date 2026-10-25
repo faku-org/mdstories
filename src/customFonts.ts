@@ -125,8 +125,12 @@ const API = 'https://fonts.googleapis.com/css2?family='
  * Google answers 400 (without CORS headers, so it surfaces as a network error) for a weight range the family
  * doesn't have, and there is no CORS-readable metadata to ask first. So try the usual variable ranges in parallel.
  */
-const RANGES = ['100..900', '200..900', '300..900', '400..900', '500..900', '100..800', '200..800', '300..800', '400..800', '100..700', '200..700', '300..700', '400..700', '100..1000']
-const VARIABLE_QUERIES = RANGES.flatMap((r) => [`ital,wght@0,${r};1,${r}`, `wght@${r}`])
+/** Two rounds: the common ranges first, so most families never trigger the rest of the (console-visible) failed probes. */
+const RANGES = [
+  ['100..900', '200..900', '300..900', '400..900'],
+  ['500..900', '100..800', '200..800', '300..800', '400..800', '100..700', '200..700', '300..700', '400..700', '100..1000'],
+]
+const variableQueries = (ranges: string[]) => ranges.flatMap((r) => [`ital,wght@0,${r};1,${r}`, `wght@${r}`])
 /** Static families: a few fixed weights, then whatever the default gives. */
 const STATIC_QUERIES = ['ital,wght@0,400;0,700;1,400;1,700', 'wght@400;700', '']
 
@@ -173,7 +177,11 @@ export async function importGoogleFont(input: string): Promise<StoredFont> {
   }
 
   // Prefer variable families with italics, then the widest weight range.
-  const variable = (await Promise.all(VARIABLE_QUERIES.map(query))).filter((f) => f.length)
+  let variable: ParsedFace[][] = []
+  for (const round of RANGES) {
+    variable = (await Promise.all(variableQueries(round).map(query))).filter((f) => f.length)
+    if (variable.length) break
+  }
   variable.sort((a, b) => Number(b.some((f) => f.style === 'italic')) - Number(a.some((f) => f.style === 'italic')) || span(b) - span(a))
   let parsed = variable[0] ?? []
   for (const q of STATIC_QUERIES) {

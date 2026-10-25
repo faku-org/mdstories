@@ -4,6 +4,7 @@ import { Button } from './components/controls'
 import { EditorPane } from './components/EditorPane'
 import type { SetStyle } from './components/panels'
 import { PreviewStage } from './components/PreviewStage'
+import { ResizeHandle } from './components/ResizeHandle'
 import { SettingsAside } from './components/SettingsAside'
 import { StoryStrip } from './components/StoryStrip'
 import { StoryPage } from './components/StoryPage'
@@ -11,7 +12,7 @@ import { Toast, type ToastData } from './components/Toast'
 import { initCustomFonts } from './customFonts'
 import { download, fontCss, renderAll, renderPng, renderThumb, slug, zipPngs } from './export'
 import { getCustomFonts, subscribeFonts } from './fonts'
-import { usePagination } from './hooks'
+import { PANELS, usePagination, usePanelSizes, useSize } from './hooks'
 import { titleFromMd } from './markdown'
 import { SAMPLE_MD } from './sample'
 import { deleteHistory, listHistory, loadDraft, loadTemplates, saveDraft, saveHistory, saveTemplates, uid, type HistoryEntry } from './storage'
@@ -36,6 +37,8 @@ export default function App() {
 
   // Imported fonts load after startup: re-render so every story picks up the real family.
   const customFonts = useSyncExternalStore(subscribeFonts, getCustomFonts)
+  const [rootRef, root] = useSize<HTMLDivElement>()
+  const panels = usePanelSizes(root.w)
   const nodesRef = useRef<(HTMLDivElement | null)[]>([])
   const fontCssCache = useRef(new Map<string, string>())
   const { pages, measureRef, areaRef } = usePagination(md, style)
@@ -212,7 +215,7 @@ export default function App() {
   const page = pages[current] ?? pages[0]
 
   return (
-    <div className="grid h-full grid-cols-[minmax(300px,1fr)_minmax(380px,1.15fr)_360px] overflow-hidden">
+    <div ref={rootRef} className="relative grid h-full overflow-hidden" style={{ gridTemplateColumns: `${panels.editor}px minmax(0, 1fr) ${panels.settings}px` }}>
       <EditorPane
         title={title}
         md={md}
@@ -273,6 +276,29 @@ export default function App() {
       <div aria-hidden className="pointer-events-none fixed top-0 left-[-20000px] invisible">
         <StoryPage style={style} html={null} index={0} total={2} areaRef={areaRef} contentRef={measureRef} />
       </div>
+
+      <ResizeHandle
+        label="Ancho del editor"
+        value={panels.editor}
+        min={PANELS.editor.min}
+        max={panels.maxEditor}
+        direction={1}
+        onChange={panels.setEditor}
+        onReset={() => panels.reset('editor')}
+        style={{ left: panels.editor }}
+        className="-translate-x-1/2"
+      />
+      <ResizeHandle
+        label="Ancho de los ajustes"
+        value={panels.settings}
+        min={PANELS.settings.min}
+        max={panels.maxSettings}
+        direction={-1}
+        onChange={panels.setSettings}
+        onReset={() => panels.reset('settings')}
+        style={{ right: panels.settings }}
+        className="translate-x-1/2"
+      />
 
       <Toast toast={toast} onClose={() => setToast(null)} />
     </div>
