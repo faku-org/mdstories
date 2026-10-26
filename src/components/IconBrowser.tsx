@@ -69,7 +69,7 @@ function Browser({ value, onPick }: { value: string | null; onPick: (id: string)
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder={source === 'brands' ? 'Buscar marca: instagram, github…' : 'Buscar en inglés: heart, camera…'}
-            className="h-9 w-full rounded-lg border border-line bg-surface-2 pr-2.5 pl-8 text-sm placeholder:text-ink-muted/60"
+            className="h-9 w-full rounded-lg border border-line bg-surface-2 pr-2.5 pl-8 text-sm placeholder:text-ink-muted/60 max-md:h-11 max-md:text-base"
           />
         </div>
         <div role="tablist" aria-label="Origen" className="flex gap-1">
@@ -80,7 +80,7 @@ function Browser({ value, onPick }: { value: string | null; onPick: (id: string)
               role="tab"
               aria-selected={source === s.id}
               onClick={() => setSource(s.id)}
-              className={`h-8 rounded-full px-3 text-xs font-medium transition-colors ${source === s.id ? 'bg-white/[0.1] text-ink' : 'text-ink-muted hover:text-ink'}`}
+              className={`h-8 rounded-full px-3 text-xs max-md:h-10 max-md:text-sm font-medium transition-colors ${source === s.id ? 'bg-white/[0.1] text-ink' : 'text-ink-muted hover:text-ink'}`}
             >
               {s.label}
             </button>

@@ -62,11 +62,11 @@ export function Toggle({ label, checked, onChange, hint }: { label: string; chec
         role="switch"
         aria-checked={checked}
         onClick={() => onChange(!checked)}
-        className={`relative mt-0.5 h-5 w-9 flex-none rounded-full transition-colors ${checked ? 'bg-accent' : 'bg-white/15'}`}
+        className={`relative mt-0.5 h-5 w-9 flex-none rounded-full transition-colors max-md:h-7 max-md:w-12 ${checked ? 'bg-accent' : 'bg-white/15'}`}
       >
-        {/* Track 36 - knob 16 - 2 x 2px inset = 16px of travel (translate-x-4). */}
+        {/* Track 36 - knob 16 - 2 x 2px inset = 16px of travel (translate-x-4). Phones: track 48, knob 24, 20px of travel. */}
         <span
-          className={`absolute top-0.5 left-0.5 size-4 rounded-full transition-transform ${checked ? 'translate-x-4 bg-on-accent' : 'translate-x-0 bg-ink'}`}
+          className={`absolute top-0.5 left-0.5 size-4 rounded-full transition-transform max-md:size-6 ${checked ? 'translate-x-4 bg-on-accent max-md:translate-x-5' : 'translate-x-0 bg-ink'}`}
         />
       </button>
     </div>
@@ -93,7 +93,7 @@ export function Segmented<T extends string>(props: {
               aria-checked={on}
               title={o.label}
               onClick={() => props.onChange(o.value)}
-              className={`flex h-8 flex-1 items-center justify-center gap-1.5 rounded-md text-xs transition-colors ${
+              className={`flex h-8 flex-1 items-center justify-center gap-1.5 rounded-md text-xs max-md:h-11 max-md:text-sm transition-colors ${
                 on ? 'bg-surface-2 text-ink shadow-sm' : 'text-ink-muted hover:text-ink'
               }`}
             >
@@ -124,7 +124,7 @@ export function Select(props: { label: string; value: string; options: { value: 
         id={id}
         value={props.value}
         onChange={(e) => props.onChange(e.target.value)}
-        className="h-9 w-full rounded-lg border border-line bg-surface-2 px-2 text-sm"
+        className="h-9 w-full rounded-lg border border-line bg-surface-2 px-2 text-sm max-md:h-11 max-md:text-base"
       >
         {groups.map((g) =>
           g ? (
@@ -149,7 +149,7 @@ export function ColorField({ label, value, onChange }: { label: string; value: s
         type="color"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="size-8 flex-none cursor-pointer rounded-md border border-line bg-transparent p-0.5"
+        className="size-8 flex-none cursor-pointer rounded-md max-md:size-11 border border-line bg-transparent p-0.5"
       />
       <label htmlFor={id} className="min-w-0 flex-1 truncate text-sm">
         {label}
@@ -158,7 +158,7 @@ export function ColorField({ label, value, onChange }: { label: string; value: s
         aria-label={`${label} (hex)`}
         value={value}
         onChange={(e) => /^#[0-9a-f]{6}$/i.test(e.target.value) && onChange(e.target.value)}
-        className="w-20 rounded-md border border-line bg-surface-2 px-1.5 py-1 font-mono text-xs uppercase"
+        className="w-20 rounded-md border border-line bg-surface-2 px-1.5 py-1 font-mono text-xs uppercase max-md:h-11 max-md:w-24 max-md:text-base"
         maxLength={7}
       />
     </div>
@@ -177,7 +177,7 @@ export function TextField(props: { label: string; value: string; onChange: (v: s
         value={props.value}
         placeholder={props.placeholder}
         onChange={(e) => props.onChange(e.target.value)}
-        className="h-9 w-full rounded-lg border border-line bg-surface-2 px-2.5 text-sm placeholder:text-ink-muted/60"
+        className="h-9 w-full rounded-lg border border-line bg-surface-2 px-2.5 text-sm placeholder:text-ink-muted/60 max-md:h-11 max-md:text-base"
       />
     </div>
   )
@@ -194,11 +194,11 @@ export function IconPicker(props: {
   const [browsing, setBrowsing] = useState(false)
   const custom = props.value && !ICONS[props.value] && !props.extra?.some((x) => x.value === props.value) ? props.value : null
   const cell = (on: boolean) =>
-    `flex size-9 items-center justify-center rounded-md transition-colors ${on ? 'bg-accent text-on-accent' : 'bg-white/[0.06] text-ink hover:bg-white/[0.12]'}`
+    `flex size-9 items-center justify-center rounded-md transition-colors max-md:size-11 ${on ? 'bg-accent text-on-accent' : 'bg-white/[0.06] text-ink hover:bg-white/[0.12]'}`
   return (
     <div className="space-y-1.5">
       <span className="text-sm">{props.label}</span>
-      <div role="radiogroup" aria-label={props.label} className="grid grid-cols-8 gap-1">
+      <div role="radiogroup" aria-label={props.label} className="grid grid-cols-8 gap-1 max-md:grid-cols-6">
         {props.allowNone && (
           <button type="button" role="radio" aria-checked={props.value === null} title="Ninguno" className={cell(props.value === null)} onClick={() => props.onChange(null)}>
             <Ban className="size-4" />
@@ -258,7 +258,7 @@ export function Button({
   return (
     <button
       type="button"
-      className={`inline-flex h-9 items-center justify-center gap-2 rounded-lg px-3 text-sm font-medium transition disabled:opacity-50 ${v} ${className}`}
+      className={`inline-flex h-9 items-center justify-center gap-2 rounded-lg px-3 text-sm max-md:h-11 font-medium transition disabled:opacity-50 ${v} ${className}`}
       {...rest}
     >
       {children}
