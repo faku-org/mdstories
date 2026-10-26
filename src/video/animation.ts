@@ -12,6 +12,8 @@ export const FPS = 30
 
 export interface VideoStory {
   html: string
+  /** Per-page style overrides from paginate(), when the text was shrunk to fit. */
+  vars?: Record<string, string>
   /** Position in the whole sequence (for "02 / 07") and its length in frames. */
   index: number
   frames: number

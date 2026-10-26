@@ -11,6 +11,8 @@ import { Button, Segmented, Slider, Toggle } from './controls'
 import { Dialog } from './Dialog'
 
 type Scope = 'one' | 'all' | 'each'
+/** How the per-story videos reach the disk: one .zip, or one download per MP4. */
+type Delivery = 'zip' | 'files'
 
 const QUALITIES: { value: VideoQuality; label: string }[] = [
   { value: 'medium', label: 'Media' },
@@ -54,6 +56,7 @@ const fmtTime = (s: number) => (s < 60 ? `${Math.round(s)} s` : `${Math.floor(s 
 
 function Body({ style, pages, current, title }: Props) {
   const [scope, setScope] = useState<Scope>('one')
+  const [delivery, setDelivery] = useState<Delivery>('zip')
   const [animation, setAnimation] = useState<AnimationKind>('slide')
   const [progressBar, setProgressBar] = useState(true)
   const [auto, setAuto] = useState(true)
@@ -67,7 +70,7 @@ function Body({ style, pages, current, title }: Props) {
 
   const stories = useMemo<VideoStory[]>(() => {
     const pick = scope === 'one' ? [current] : pages.map((_, i) => i)
-    return pick.map((i) => ({ html: pages[i].html, index: i, frames: Math.round(storySeconds(pages[i].html, auto ? null : seconds) * FPS) }))
+    return pick.map((i) => ({ html: pages[i].html, vars: pages[i].vars, index: i, frames: Math.round(storySeconds(pages[i].html, auto ? null : seconds) * FPS) }))
   }, [scope, current, pages, auto, seconds])
 
   const props: StoryVideoProps = { style, stories, total: pages.length, animation, progressBar }
@@ -88,7 +91,23 @@ function Body({ style, pages, current, title }: Props) {
     }
     const opts = { quality, gpu, signal: ctl.signal }
     try {
-      if (scope === 'each') {
+      if (scope === 'each' && delivery === 'files') {
+        // One render per story, same config, each MP4 downloaded as soon as it is ready.
+        for (const [i, s] of stories.entries()) {
+          ctl.signal.throwIfAborted()
+          const blob = await renderStoryVideo(
+            { ...props, stories: [s] },
+            { ...opts, onProgress: (p) => report(`Historia ${i + 1} de ${stories.length}`, (i + p.progress) / stories.length) },
+          )
+          const href = URL.createObjectURL(blob)
+          download(href, `${base}-${String(i + 1).padStart(2, '0')}.mp4`)
+          setTimeout(() => URL.revokeObjectURL(href), 10_000)
+          // Browsers drop downloads that start in the same tick.
+          await new Promise((r) => setTimeout(r, 300))
+        }
+        setMessage({ ok: true, text: `${stories.length} videos MP4 descargados (${base}-01 a ${String(stories.length).padStart(2, '0')}).` })
+        done = true
+      } else if (scope === 'each') {
         const files: { name: string; blob: Blob }[] = []
         for (const [i, s] of stories.entries()) {
           const blob = await renderStoryVideo(
@@ -167,6 +186,17 @@ function Body({ style, pages, current, title }: Props) {
               { value: 'each', label: 'Una por historia' },
             ]}
           />
+          {scope === 'each' && (
+            <Segmented
+              label="Entrega"
+              value={delivery}
+              onChange={setDelivery}
+              options={[
+                { value: 'zip', label: 'Un .zip' },
+                { value: 'files', label: 'Archivos sueltos' },
+              ]}
+            />
+          )}
           <div className="space-y-1">
             <Segmented label="Animación" value={animation} onChange={setAnimation} options={ANIMATIONS.map((a) => ({ value: a.value, label: a.label }))} />
             <p className="text-xs text-ink-muted">{ANIMATIONS.find((a) => a.value === animation)?.hint}</p>
@@ -199,7 +229,7 @@ function Body({ style, pages, current, title }: Props) {
           </div>
         ) : (
           <Button variant="primary" className="w-full" onClick={generate}>
-            <Film className="size-4" /> Generar {scope === 'each' ? 'videos (.zip)' : 'MP4'}
+            <Film className="size-4" /> Generar {scope === 'each' ? (delivery === 'zip' ? 'videos (.zip)' : `${stories.length} MP4`) : 'MP4'}
           </Button>
         )}
         <p className="text-xs text-ink-muted">
