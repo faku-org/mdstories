@@ -1,0 +1,45 @@
+name: Deploy
+
+# Builds the app and swaps the render service release on the VPS. The runner is the
+# org's self-hosted one on the VPS itself: it has the Chromium install, the
+# /srv/mdstories-render layout and sudo for the service restart.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-mdstories
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: deploy
+    runs-on: [self-hosted, vps-faku-org]
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Put bun on PATH
+        run: echo /opt/bun >> "$GITHUB_PATH"
+
+      - name: Install and build
+        run: |
+          bun install --frozen-lockfile
+          bun run build
+
+      - name: Deploy render service
+        run: bash /home/hermes/deploy/mdstories-render.sh "$GITHUB_WORKSPACE"
+
+      - name: Smoke test
+        run: |
+          set -euo pipefail
+          curl -fsS --max-time 10 http://127.0.0.1:4181/health
+          code=$(curl -s -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:4181/render \
+            -H 'content-type: application/json' -d '{"md":"# sin token"}')
+          echo "sin token -> $code"
+          test "$code" = "401"

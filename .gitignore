@@ -28,3 +28,7 @@ dist-ssr
 
 # graphify artifacts (generated, not source)
 graphify-out/
+
+# render service (own deps, installed on the server)
+render/node_modules
+render/bun.lockb

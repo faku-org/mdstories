@@ -45,7 +45,10 @@ export default function App() {
   const [video, setVideo] = useState(false)
   // Phones show one area at a time (bottom tabs) instead of the three-column desktop layout.
   const mobile = useMediaQuery('(max-width: 767px)')
-  const [tab, setTab] = useState<MobileTab>('editor')
+  // Headless renders need the export sources on screen: `?render=1` opens on the strip.
+  const [tab, setTab] = useState<MobileTab>(() =>
+    new URLSearchParams(location.search).has('render') ? 'stories' : 'editor',
+  )
 
   // Imported fonts load after startup: re-render so every story picks up the real family.
   const customFonts = useSyncExternalStore(subscribeFonts, getCustomFonts)
@@ -64,6 +67,31 @@ export default function App() {
   useEffect(() => {
     fontCssCache.current.clear()
   }, [customFonts])
+
+  // ---------- automation ----------
+  // `?render=1` exposes the exact pipeline the export buttons use, so a headless
+  // driver (render/src/render.ts) gets the same PNGs the browser produces. Inert
+  // for normal use: no query param, no global. `ready()` guards the first frame,
+  // where pagination still holds a single empty page.
+  useEffect(() => {
+    if (!new URLSearchParams(location.search).has('render')) return
+    const api = {
+      ready: () => pages.length > 1 || (pages[0]?.html.length ?? 0) > 0,
+      pages: () => pages.length,
+      render: async () => {
+        const nodes = nodesRef.current.slice(0, pages.length).filter((n): n is HTMLDivElement => !!n)
+        if (!nodes.length) throw new Error('sin nodos de historia')
+        // One-shot: no need for the cached font CSS the interactive exports reuse.
+        const css = await fontCss(nodes[0]!)
+        const urls = await renderAll(nodes, css, () => {})
+        return { pages: urls.length, pngs: urls }
+      },
+    }
+    Object.assign(window, { __MDS_RENDER__: api })
+    return () => {
+      delete (window as { __MDS_RENDER__?: unknown }).__MDS_RENDER__
+    }
+  }, [pages])
 
   // ---------- persistence ----------
   useEffect(() => {
