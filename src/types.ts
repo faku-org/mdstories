@@ -1,4 +1,7 @@
 export type Align = 'left' | 'center' | 'right' | 'justify'
+/** Headings never follow the body alignment: they anchor left or right. */
+export type HeadingAlign = 'left' | 'right'
+
 export type Bullet = 'dot' | 'dash' | string
 
 export interface StoryStyle {
@@ -15,6 +18,7 @@ export interface StoryStyle {
   headingUppercase: boolean
   highlightStrong: boolean
   align: Align
+  headingAlign: HeadingAlign
   verticalAlign: 'start' | 'center'
   bgMode: 'solid' | 'gradient'
   gradientAngle: number
@@ -61,6 +65,7 @@ export const DEFAULT_STYLE: StoryStyle = {
   headingUppercase: false,
   highlightStrong: true,
   align: 'left',
+  headingAlign: 'left',
   verticalAlign: 'start',
   bgMode: 'solid',
   gradientAngle: 160,

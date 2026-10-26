@@ -165,6 +165,7 @@ input[type='range'] {
   letter-spacing: var(--st-hls);
   text-transform: var(--st-hcase);
   line-height: 1.12;
+  text-align: var(--st-halign);
   text-wrap: balance;
 }
 
