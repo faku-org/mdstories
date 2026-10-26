@@ -3,6 +3,7 @@ import { lazy, Suspense, useCallback, useEffect, useRef, useState, useSyncExtern
 import { Button } from './components/controls'
 import { ShortcutsHelp } from './components/ShortcutsHelp'
 import { EditorPane } from './components/EditorPane'
+import { MobileNav, type MobileTab } from './components/MobileNav'
 import type { SetStyle } from './components/panels'
 import { PreviewStage } from './components/PreviewStage'
 import { ResizeHandle } from './components/ResizeHandle'
@@ -13,7 +14,7 @@ import { Toast, type ToastData } from './components/Toast'
 import { initCustomFonts } from './customFonts'
 import { download, fontCss, renderAll, renderPng, renderThumb, slug, zipPngs } from './export'
 import { getCustomFonts, subscribeFonts } from './fonts'
-import { PANELS, usePagination, usePanelSizes, useSize } from './hooks'
+import { PANELS, useMediaQuery, usePagination, usePanelSizes, useSize } from './hooks'
 import { titleFromMd } from './markdown'
 import { SAMPLE_MD } from './sample'
 import { useShortcuts } from './shortcuts'
@@ -42,6 +43,9 @@ export default function App() {
   const [help, setHelp] = useState(false)
   const [preview, setPreview] = useState(false)
   const [video, setVideo] = useState(false)
+  // Phones show one area at a time (bottom tabs) instead of the three-column desktop layout.
+  const mobile = useMediaQuery('(max-width: 767px)')
+  const [tab, setTab] = useState<MobileTab>('editor')
 
   // Imported fonts load after startup: re-render so every story picks up the real family.
   const customFonts = useSyncExternalStore(subscribeFonts, getCustomFonts)
@@ -210,10 +214,24 @@ export default function App() {
   const overflowCount = pages.filter((p) => p.overflow).length
   const page = pages[current] ?? pages[0]
 
+  // Panels stay mounted (state, scroll and caret survive); only the active one is shown on phones.
+  const slot = (id: Exclude<MobileTab, 'stories'>) =>
+    mobile ? (!preview && tab === id ? 'grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)] grid-rows-[minmax(0,1fr)]' : 'hidden') : preview ? 'hidden' : 'contents'
+  // Off-screen, not display:none: the story strip holds the export sources and must keep its layout.
+  const mainClass = !mobile
+    ? 'flex min-h-0 flex-col'
+    : preview || tab === 'stories'
+      ? 'flex min-h-0 flex-1 flex-col'
+      : 'pointer-events-none invisible fixed top-0 left-[-20000px] flex h-dvh w-screen flex-col'
+
   return (
-    <div ref={rootRef} className="relative grid h-full overflow-hidden" style={{ gridTemplateColumns: preview ? 'minmax(0, 1fr)' : `${panels.editor}px minmax(0, 1fr) ${panels.settings}px` }}>
+    <div
+      ref={rootRef}
+      className={`relative h-full overflow-hidden ${mobile ? 'flex flex-col' : 'grid'}`}
+      style={mobile ? undefined : { gridTemplateColumns: preview ? 'minmax(0, 1fr)' : `${panels.editor}px minmax(0, 1fr) ${panels.settings}px` }}
+    >
       {/* Preview mode hides the panels but keeps them mounted, so their state (tab, scroll, caret) survives. */}
-      <div className={preview ? 'hidden' : 'contents'}>
+      <div className={slot('editor')}>
         <EditorPane
           title={title}
           md={md}
@@ -227,7 +245,7 @@ export default function App() {
       </div>
 
       {/* ---------- Preview ---------- */}
-      <main className="flex min-h-0 flex-col">
+      <main className={mainClass} inert={mobile && !preview && tab !== 'stories'}>
         <PreviewStage
           style={style}
           page={page}
@@ -243,18 +261,19 @@ export default function App() {
 
         {/* In preview mode the strip stays laid out off-screen: its nodes are the export sources. */}
         <div className={preview ? 'pointer-events-none fixed top-0 left-[-20000px] opacity-0' : 'border-t border-line p-3'} inert={preview}>
-          <StoryStrip style={style} pages={pages} current={current} onSelect={setCurrent} register={registerNode} />
-          <div className="mt-3 flex items-center gap-2">
-            <Button onClick={() => saveToHistory()} title="Guardar en el historial (Ctrl+S)">
+          <StoryStrip style={style} pages={pages} current={current} onSelect={setCurrent} register={registerNode} compact={mobile} />
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <Button onClick={() => saveToHistory()} title="Guardar en el historial (Ctrl+S)" className="max-md:flex-1">
               <Save className="size-4" /> Guardar
             </Button>
-            <Button onClick={exportCurrent} disabled={!!busy} title="Descargar la historia actual como PNG (Ctrl+E)">
-              <Download className="size-4" /> Esta historia
+            <Button onClick={exportCurrent} disabled={!!busy} title="Descargar la historia actual como PNG (Ctrl+E)" className="max-md:flex-1">
+              <Download className="size-4" /> <span className="max-md:hidden">Esta historia</span>
+              <span className="md:hidden">PNG</span>
             </Button>
-            <Button onClick={() => setVideo(true)} title="Exportar como video MP4 con animaciones">
+            <Button onClick={() => setVideo(true)} title="Exportar como video MP4 con animaciones" className="max-md:flex-1">
               <Film className="size-4" /> Video
             </Button>
-            <Button variant="primary" className="ml-auto" onClick={exportAll} disabled={!!busy} title="Descargar todas (Ctrl+Shift+E)">
+            <Button variant="primary" className="ml-auto max-md:order-last max-md:w-full" onClick={exportAll} disabled={!!busy} title="Descargar todas (Ctrl+Shift+E)">
               {busy ? <Loader2 className="size-4 animate-spin" /> : <Download className="size-4" />}
               {busy ?? `Exportar ${pages.length > 1 ? `${pages.length} historias (.zip)` : 'PNG'}`}
             </Button>
@@ -262,7 +281,7 @@ export default function App() {
         </div>
       </main>
 
-      <div className={preview ? 'hidden' : 'contents'}>
+      <div className={slot('settings')}>
         <SettingsAside
           style={style}
           setStyle={setStyle}
@@ -285,7 +304,7 @@ export default function App() {
         <StoryPage style={style} html={null} index={0} total={2} areaRef={areaRef} contentRef={measureRef} />
       </div>
 
-      {!preview && (
+      {!preview && !mobile && (
         <>
           <ResizeHandle
             label="Ancho del editor"
@@ -311,6 +330,8 @@ export default function App() {
           />
         </>
       )}
+
+      {mobile && !preview && <MobileNav tab={tab} onTab={setTab} overflowCount={overflowCount} />}
 
       {video && (
         <Suspense fallback={null}>

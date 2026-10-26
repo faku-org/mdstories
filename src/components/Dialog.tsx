@@ -25,7 +25,7 @@ export function Dialog({ open, onClose, title, children, className = '' }: { ope
             <h2 id={titleId} className="text-sm font-semibold">
               {title}
             </h2>
-            <button type="button" onClick={onClose} title="Cerrar (Esc)" className="rounded-md p-1.5 text-ink-muted hover:bg-white/[0.08] hover:text-ink">
+            <button type="button" onClick={onClose} title="Cerrar (Esc)" className="rounded-md p-1.5 max-md:p-3 text-ink-muted hover:bg-white/[0.08] hover:text-ink">
               <X className="size-4" />
               <span className="sr-only">Cerrar</span>
             </button>

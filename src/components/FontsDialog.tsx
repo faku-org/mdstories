@@ -102,7 +102,7 @@ function Body({ bodyFont, headingFont, onUse }: Pick<Props, 'bodyFont' | 'headin
                 setMode(id)
                 setMessage(null)
               }}
-              className={`h-8 rounded-full px-3 text-xs font-medium transition-colors ${mode === id ? 'bg-white/[0.1] text-ink' : 'text-ink-muted hover:text-ink'}`}
+              className={`h-8 rounded-full px-3 text-xs max-md:h-10 max-md:text-sm font-medium transition-colors ${mode === id ? 'bg-white/[0.1] text-ink' : 'text-ink-muted hover:text-ink'}`}
             >
               {text}
             </button>

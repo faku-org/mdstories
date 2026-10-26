@@ -1,10 +1,23 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { ensureFonts, getCustomFonts, subscribeFonts } from './fonts'
 import { getIconSync, loadIcon, subscribeIcons } from './icons'
 import { mdToSections } from './markdown'
 import { paginate, type Page } from './paginate'
 import { shrinkVars } from './storyVars'
 import type { StoryStyle } from './types'
+
+/** Live `matchMedia` result. */
+export function useMediaQuery(query: string) {
+  const subscribe = useCallback(
+    (cb: () => void) => {
+      const m = matchMedia(query)
+      m.addEventListener('change', cb)
+      return () => m.removeEventListener('change', cb)
+    },
+    [query],
+  )
+  return useSyncExternalStore(subscribe, () => matchMedia(query).matches)
+}
 
 export function useSize<T extends HTMLElement>() {
   const ref = useRef<T>(null)
