@@ -74,6 +74,17 @@ function authorized(req: Request): boolean {
   return diff === 0
 }
 
+/**
+ * Two ways in, and the browser never holds a token:
+ *   - `/codemode/*` and scripts: `Authorization: Bearer <WCM_TOKEN>`.
+ *   - the studio in a browser: nginx terminates basic auth and stamps `X-Auth-User`.
+ * The server binds to loopback, so that header can only come from the proxy.
+ */
+function allowed(req: Request): boolean {
+  if (authorized(req)) return true
+  return (req.headers.get('x-auth-user') ?? '') !== ''
+}
+
 interface RenderBody {
   md?: unknown
   title?: unknown
@@ -123,6 +134,8 @@ async function serveStatic(pathname: string): Promise<Response> {
 
 const server = Bun.serve({
   port: PORT,
+  // Loopback only: nginx is the public face, so `X-Auth-User` can be trusted.
+  hostname: process.env.HOSTNAME_BIND ?? '127.0.0.1',
   maxRequestBodySize: MAX_MD_BYTES * 4,
   async fetch(req) {
     const url = new URL(req.url)
@@ -134,7 +147,7 @@ const server = Bun.serve({
     if (url.pathname === '/health') return json({ ok: true, active, queued: waiting.length })
 
     if (url.pathname === '/render' && req.method === 'POST') {
-      if (!authorized(req)) return json({ error: 'unauthorized' }, 401)
+      if (!allowed(req)) return json({ error: 'unauthorized' }, 401)
       const body = (await req.json().catch(() => ({}))) as RenderBody
       return runRender(body, origin)
     }

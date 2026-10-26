@@ -9,10 +9,17 @@ Source: `render/` · Service: `mdstories-render.service` on `127.0.0.1:4181`
 
 ## Auth
 
-`POST /render` and `/codemode/*` require `Authorization: Bearer <WCM_TOKEN>`.
-The token lives in `/home/hermes/deploy/mdstories-render.env` on the VPS.
-Files under `/f/` are open (the id is a UUID and they expire in 24 h) so they can be
-shown in `<img>` tags and opened from a phone.
+Two ways in, and the browser never holds a token:
+
+- **Browser / studio** — nginx terminates basic auth (`faku` + the password stored as
+  `STUDIO_PASS` in `~/deploy/mdstories-render.env`) and stamps `X-Auth-User`. `POST /render`
+  is authorized by that header. The service binds to `127.0.0.1`, so the header can only come
+  from the proxy.
+- **Agents and scripts** — `/codemode/*` is open at nginx and requires
+  `Authorization: Bearer <WCM_TOKEN>` (same env file).
+
+`/f/` and `/health` are open (files are UUID-addressed and expire in 24 h) so a phone can
+open, preview and save them without a prompt.
 
 ## POST /render
 
