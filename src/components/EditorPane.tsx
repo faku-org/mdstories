@@ -24,7 +24,7 @@ export function EditorPane({ title, md, pageCount, overflowCount, onTitle, onMd,
   return (
     <section
       aria-label="Editor de Markdown"
-      className="relative flex min-h-0 flex-col border-r border-line"
+      className="relative flex min-h-0 flex-col border-r border-line max-md:border-r-0"
       onDragOver={(e) => {
         e.preventDefault()
         setDragging(true)
@@ -43,7 +43,7 @@ export function EditorPane({ title, md, pageCount, overflowCount, onTitle, onMd,
           value={title}
           onChange={(e) => onTitle(e.target.value)}
           placeholder={titleFromMd(md) || 'Sin título'}
-          className="h-9 min-w-0 flex-1 rounded-lg bg-transparent px-2 text-sm font-semibold placeholder:text-ink-muted hover:bg-white/[0.04] focus:bg-white/[0.06]"
+          className="h-9 min-w-0 flex-1 rounded-lg bg-transparent px-2 text-sm font-semibold max-md:h-11 max-md:text-base placeholder:text-ink-muted hover:bg-white/[0.04] focus:bg-white/[0.06]"
         />
         <Button onClick={() => fileRef.current?.click()} title="Abrir archivo .md">
           <FolderOpen className="size-4" /> Abrir
@@ -70,7 +70,7 @@ export function EditorPane({ title, md, pageCount, overflowCount, onTitle, onMd,
         onChange={(e) => onMd(e.target.value)}
         spellCheck
         placeholder={PLACEHOLDER}
-        className="min-h-0 flex-1 resize-none bg-transparent p-4 font-mono text-[13px] leading-relaxed outline-none placeholder:text-ink-muted/60"
+        className="min-h-0 flex-1 resize-none bg-transparent p-4 font-mono text-[13px] leading-relaxed max-md:text-base outline-none placeholder:text-ink-muted/60"
       />
       <div className="flex items-center gap-3 border-t border-line px-4 py-2 text-xs text-ink-muted tabular-nums">
         <span>{words.toLocaleString('es-AR')} palabras</span>

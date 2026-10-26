@@ -21,6 +21,11 @@ body,
   height: 100%;
 }
 
+/* Mobile browsers: 100% includes the area behind the URL bar; dvh follows what is visible. */
+#root {
+  height: 100dvh;
+}
+
 body {
   margin: 0;
   background: var(--color-canvas);

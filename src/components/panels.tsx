@@ -260,7 +260,7 @@ export function TemplatesPanel(props: {
       </div>
       <Button onClick={() => props.onApply(t)}>Aplicar</Button>
       {!t.builtIn && (
-        <button type="button" title={`Borrar ${t.name}`} onClick={() => props.onDelete(t)} className="rounded-md p-2 text-ink-muted hover:bg-danger/10 hover:text-danger">
+        <button type="button" title={`Borrar ${t.name}`} onClick={() => props.onDelete(t)} className="rounded-md p-2 text-ink-muted hover:bg-danger/10 hover:text-danger max-md:p-3">
           <Trash2 className="size-4" />
           <span className="sr-only">Borrar {t.name}</span>
         </button>
@@ -283,7 +283,7 @@ export function TemplatesPanel(props: {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Nombre del template"
-            className="h-9 min-w-0 flex-1 rounded-lg border border-line bg-surface-2 px-2.5 text-sm placeholder:text-ink-muted/60"
+            className="h-9 min-w-0 flex-1 rounded-lg border border-line bg-surface-2 px-2.5 text-sm placeholder:text-ink-muted/60 max-md:h-11 max-md:text-base"
           />
           <Button type="submit" variant="primary">
             <Save className="size-4" /> Guardar
@@ -319,7 +319,7 @@ export function HistoryPanel(props: { entries: HistoryEntry[]; currentId: string
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Buscar"
-          className="h-9 w-full rounded-lg border border-line bg-surface-2 pr-2.5 pl-8 text-sm placeholder:text-ink-muted/60"
+          className="h-9 w-full rounded-lg border border-line bg-surface-2 pr-2.5 pl-8 text-sm placeholder:text-ink-muted/60 max-md:h-11 max-md:text-base"
         />
       </div>
       <p className="text-xs text-ink-muted">

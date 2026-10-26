@@ -31,8 +31,8 @@ export function SettingsAside(props: Props) {
   const { style, setStyle } = props
   const [tab, setTab] = useState<Tab>('type')
   return (
-      <aside aria-label="Ajustes" className="flex min-h-0 flex-col border-l border-line bg-surface">
-        <nav className="flex gap-1 border-b border-line p-2" role="tablist" aria-label="Secciones de ajustes">
+      <aside aria-label="Ajustes" className="flex min-h-0 flex-col border-l border-line bg-surface max-md:border-l-0">
+        <nav className="flex gap-1 overflow-x-auto border-b border-line p-2" role="tablist" aria-label="Secciones de ajustes">
           {TABS.map((t) => (
             <button
               key={t.id}
@@ -41,7 +41,7 @@ export function SettingsAside(props: Props) {
               aria-selected={tab === t.id}
               onClick={() => setTab(t.id)}
               title={t.label}
-              className={`flex h-9 flex-1 items-center justify-center gap-1.5 rounded-full px-3 text-xs font-medium transition-colors ${
+              className={`flex h-9 flex-1 items-center justify-center gap-1.5 rounded-full px-3 text-xs max-md:h-11 max-md:px-2 max-md:text-sm font-medium transition-colors ${
                 tab === t.id ? 'bg-white/[0.1] text-ink' : 'text-ink-muted hover:text-ink'
               }`}
             >

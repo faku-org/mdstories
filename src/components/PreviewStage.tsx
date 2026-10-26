@@ -1,3 +1,4 @@
+import { useRef } from 'react'
 import { ChevronLeft, ChevronRight, Eye, EyeOff, Keyboard, ScanEye, TriangleAlert } from 'lucide-react'
 import { useSize } from '../hooks'
 import type { Page } from '../paginate'
@@ -25,20 +26,22 @@ export function PreviewStage({ style, page, current, total, showSafe, onToggleSa
   const [stageRef, stage] = useSize<HTMLDivElement>()
   const scale = stage.w && stage.h ? Math.min((stage.h - 24) / STORY_H, (stage.w - 24) / STORY_W) : 0.3
   const box = { width: STORY_W * scale, height: STORY_H * scale }
+  // Touch: a horizontal swipe on the story changes story.
+  const swipe = useRef<{ x: number; y: number } | null>(null)
 
   return (
     <>
       {!bare && (
-        <div className="flex flex-wrap items-center gap-2 border-b border-line p-3">
+        <div className="flex flex-wrap items-center gap-2 border-b border-line p-3 max-md:flex-nowrap max-md:px-2">
           <Button onClick={onToggleSafe} aria-pressed={showSafe} title="Zonas seguras (Z)" className={showSafe ? 'ring-1 ring-accent/60' : ''}>
-            <ScanEye className="size-4" /> Zonas seguras
+            <ScanEye className="size-4" /> <span className="max-md:sr-only">Zonas seguras</span>
           </Button>
-          <Button onClick={onHelp} title="Atajos de teclado (?)">
+          <Button onClick={onHelp} title="Atajos de teclado (?)" className="max-md:hidden">
             <Keyboard className="size-4" />
             <span className="sr-only">Atajos de teclado</span>
           </Button>
           <Button onClick={onTogglePreview} title="Modo preview: solo lo que se exporta (P)">
-            <Eye className="size-4" /> Preview
+            <Eye className="size-4" /> <span className="max-md:sr-only">Preview</span>
           </Button>
           <div className="ml-auto flex items-center gap-1">
             <Button onClick={() => onGo(current - 1)} disabled={current === 0} title="Historia anterior (←)">
@@ -56,7 +59,22 @@ export function PreviewStage({ style, page, current, total, showSafe, onToggleSa
         </div>
       )}
 
-      <div ref={stageRef} className="relative min-h-0 flex-1 overflow-hidden">
+      <div
+        ref={stageRef}
+        className="relative min-h-0 flex-1 touch-pan-y overflow-hidden"
+        onTouchStart={(e) => {
+          const t = e.touches[0]
+          swipe.current = e.touches.length === 1 ? { x: t.clientX, y: t.clientY } : null
+        }}
+        onTouchEnd={(e) => {
+          const s = swipe.current
+          swipe.current = null
+          if (!s) return
+          const t = e.changedTouches[0]
+          const dx = t.clientX - s.x
+          if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(t.clientY - s.y) * 1.5) onGo(current + (dx < 0 ? 1 : -1))
+        }}
+      >
         <div className="absolute top-1/2 left-1/2" style={{ ...box, transform: 'translate(-50%, -50%)' }}>
           <div className={`overflow-hidden shadow-2xl shadow-black/50 ${bare ? '' : 'rounded-[10px] ring-1 ring-line'}`} style={box}>
             <div className="relative origin-top-left" style={{ width: STORY_W, height: STORY_H, transform: `scale(${scale})` }}>
@@ -72,18 +90,18 @@ export function PreviewStage({ style, page, current, total, showSafe, onToggleSa
         </div>
         {bare && (
           <div role="toolbar" aria-label="Modo preview" className="absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full border border-line bg-surface/90 p-1 opacity-70 shadow-lg transition-opacity hover:opacity-100 focus-within:opacity-100">
-            <Button onClick={() => onGo(current - 1)} disabled={current === 0} title="Historia anterior (←)" className="rounded-full">
+            <Button onClick={() => onGo(current - 1)} disabled={current === 0} title="Historia anterior (←)" className="rounded-full!">
               <ChevronLeft className="size-4" />
               <span className="sr-only">Anterior</span>
             </Button>
             <span className="w-14 text-center text-sm tabular-nums">
               {current + 1} / {total}
             </span>
-            <Button onClick={() => onGo(current + 1)} disabled={current >= total - 1} title="Historia siguiente (→)" className="rounded-full">
+            <Button onClick={() => onGo(current + 1)} disabled={current >= total - 1} title="Historia siguiente (→)" className="rounded-full!">
               <ChevronRight className="size-4" />
               <span className="sr-only">Siguiente</span>
             </Button>
-            <Button onClick={onTogglePreview} title="Salir del modo preview (Esc o P)" className="rounded-full">
+            <Button onClick={onTogglePreview} title="Salir del modo preview (Esc o P)" className="rounded-full!">
               <EyeOff className="size-4" /> Salir
             </Button>
           </div>
