@@ -103,6 +103,15 @@ export function LayoutPanel({ style, set }: { style: StoryStyle; set: SetStyle }
           ]}
         />
         <Segmented
+          label="Títulos"
+          value={style.headingAlign}
+          onChange={(v) => patch({ headingAlign: v })}
+          options={[
+            { value: 'left', label: 'Izquierda', icon: <AlignLeft className={ico} /> },
+            { value: 'right', label: 'Derecha', icon: <AlignRight className={ico} /> },
+          ]}
+        />
+        <Segmented
           label="Vertical"
           value={style.verticalAlign}
           onChange={(v) => patch({ verticalAlign: v })}

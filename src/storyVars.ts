@@ -30,6 +30,7 @@ export function storyVars(s: StoryStyle): CSSProperties {
     '--st-ps': s.paragraphSpacing,
     '--st-hcase': s.headingUppercase ? 'uppercase' : 'none',
     '--st-align': s.align,
+    '--st-halign': s.headingAlign,
     '--st-justify': s.align === 'center' ? 'center' : s.align === 'right' ? 'flex-end' : 'flex-start',
     '--st-valign': s.verticalAlign === 'center' ? 'center' : 'flex-start',
     '--st-top': `${s.safe.top}px`,
