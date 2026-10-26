@@ -90,18 +90,18 @@ export function PreviewStage({ style, page, current, total, showSafe, onToggleSa
         </div>
         {bare && (
           <div role="toolbar" aria-label="Modo preview" className="absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full border border-line bg-surface/90 p-1 opacity-70 shadow-lg transition-opacity hover:opacity-100 focus-within:opacity-100">
-            <Button onClick={() => onGo(current - 1)} disabled={current === 0} title="Historia anterior (←)" className="rounded-full">
+            <Button onClick={() => onGo(current - 1)} disabled={current === 0} title="Historia anterior (←)" className="rounded-full!">
               <ChevronLeft className="size-4" />
               <span className="sr-only">Anterior</span>
             </Button>
             <span className="w-14 text-center text-sm tabular-nums">
               {current + 1} / {total}
             </span>
-            <Button onClick={() => onGo(current + 1)} disabled={current >= total - 1} title="Historia siguiente (→)" className="rounded-full">
+            <Button onClick={() => onGo(current + 1)} disabled={current >= total - 1} title="Historia siguiente (→)" className="rounded-full!">
               <ChevronRight className="size-4" />
               <span className="sr-only">Siguiente</span>
             </Button>
-            <Button onClick={onTogglePreview} title="Salir del modo preview (Esc o P)" className="rounded-full">
+            <Button onClick={onTogglePreview} title="Salir del modo preview (Esc o P)" className="rounded-full!">
               <EyeOff className="size-4" /> Salir
             </Button>
           </div>
