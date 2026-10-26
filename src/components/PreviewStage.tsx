@@ -60,7 +60,7 @@ export function PreviewStage({ style, page, current, total, showSafe, onToggleSa
         <div className="absolute top-1/2 left-1/2" style={{ ...box, transform: 'translate(-50%, -50%)' }}>
           <div className={`overflow-hidden shadow-2xl shadow-black/50 ${bare ? '' : 'rounded-[10px] ring-1 ring-line'}`} style={box}>
             <div className="relative origin-top-left" style={{ width: STORY_W, height: STORY_H, transform: `scale(${scale})` }}>
-              <StoryPage style={style} html={page.html} index={current} total={total} />
+              <StoryPage style={style} html={page.html} vars={page.vars} index={current} total={total} />
               {showSafe && !bare && <SafeZoneOverlay style={style} index={current} total={total} />}
             </div>
           </div>

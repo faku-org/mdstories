@@ -37,3 +37,14 @@ export function storyVars(s: StoryStyle): CSSProperties {
     '--st-side': `${s.safe.side}px`,
   } as CSSProperties
 }
+
+/** Story variables with the text parameters scaled down, for a section that must shrink to fit. */
+export function shrinkVars(s: StoryStyle, scale: number): Record<string, string> {
+  const vars = storyVars({
+    ...s,
+    baseSize: s.baseSize * scale,
+    paragraphSpacing: s.paragraphSpacing * scale,
+    lineHeight: 1 + (s.lineHeight - 1) * scale,
+  })
+  return Object.fromEntries(Object.entries(vars).map(([k, v]) => [k, String(v)]))
+}

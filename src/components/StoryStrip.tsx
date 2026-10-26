@@ -25,6 +25,7 @@ export function StoryStrip(props: { style: StoryStyle; pages: Page[]; current: n
               <StoryPage
                 style={style}
                 html={p.html}
+                vars={p.vars}
                 index={i}
                 total={pages.length}
                 rootRef={(el) => register(i, el)}

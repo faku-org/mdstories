@@ -1,4 +1,4 @@
-import type { Ref } from 'react'
+import type { CSSProperties, Ref } from 'react'
 import { storyVars } from '../storyVars'
 import type { StoryStyle } from '../types'
 import { Icon } from './Icon'
@@ -7,6 +7,8 @@ interface Props {
   style: StoryStyle
   /** null = measurement page: the content box is left for paginate() to fill. */
   html: string | null
+  /** Per-page overrides from paginate() when the text was shrunk to fit. */
+  vars?: Record<string, string>
   index: number
   total: number
   rootRef?: Ref<HTMLDivElement>
@@ -40,7 +42,7 @@ function StoryFooter({ brand, index, total }: { brand: StoryStyle['brand']; inde
   )
 }
 
-export function StoryPage({ style, html, index, total, rootRef, areaRef, contentRef }: Props) {
+export function StoryPage({ style, html, vars, index, total, rootRef, areaRef, contentRef }: Props) {
   const b = style.brand
   const content = {
     className: 'story-content',
@@ -48,7 +50,7 @@ export function StoryPage({ style, html, index, total, rootRef, areaRef, content
     'data-hl': style.highlightStrong || undefined,
   }
   return (
-    <div ref={rootRef} className="story" style={storyVars(style)}>
+    <div ref={rootRef} className="story" style={{ ...storyVars(style), ...vars } as CSSProperties}>
       <div className="story-safe">
         {b.showHeader && <StoryHeader brand={b} />}
         <div ref={areaRef} className="story-area">

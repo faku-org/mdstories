@@ -3,6 +3,7 @@ import { ensureFonts, getCustomFonts, subscribeFonts } from './fonts'
 import { getIconSync, loadIcon, subscribeIcons } from './icons'
 import { mdToSections } from './markdown'
 import { paginate, type Page } from './paginate'
+import { shrinkVars } from './storyVars'
 import type { StoryStyle } from './types'
 
 export function useSize<T extends HTMLElement>() {
@@ -48,7 +49,7 @@ export function usePagination(md: string, style: StoryStyle) {
     const t = setTimeout(async () => {
       await ensureFonts([style.bodyFont, style.headingFont], [style.bodyWeight, style.headingWeight, style.bodyWeight + 300])
       if (cancelled || !measureRef.current || !areaRef.current) return
-      setPages(paginate(sections, measureRef.current, areaRef.current.clientHeight))
+      setPages(paginate(sections, measureRef.current, areaRef.current.clientHeight, (scale) => shrinkVars(style, scale)))
     }, 120)
     return () => {
       cancelled = true

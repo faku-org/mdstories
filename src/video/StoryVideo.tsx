@@ -31,7 +31,7 @@ function AnimatedStory({ style, story, total, animation, progressBar }: { style:
   })
   return (
     <AbsoluteFill>
-      <StoryPage style={style} html={story.html} index={story.index} total={total} rootRef={rootRef} />
+      <StoryPage style={style} html={story.html} vars={story.vars} index={story.index} total={total} rootRef={rootRef} />
       {progressBar && <ProgressBar style={style} progress={Math.min(1, frame / Math.max(story.frames - 1, 1))} />}
     </AbsoluteFill>
   )
