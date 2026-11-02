@@ -32,7 +32,7 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Lint and typecheck
-        run: bun run check
+        run: bun run verify
 
       - name: Build
         run: bun run build
